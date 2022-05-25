@@ -21,7 +21,7 @@ resource "aws_api_gateway_method" "api-test" {
 }
 
 resource "aws_api_gateway_method_settings" "api-test" {
-  depends_on  = [aws_api_gateway_account.role_cloudwatch_gateway]
+  depends_on  = [aws_api_gateway_account.role_cloudwatch_gateway, aws_api_gateway_stage.api-test]
   rest_api_id = aws_api_gateway_rest_api.api-test.id
   stage_name  = var.stage_name
   method_path = "*/*"
@@ -62,6 +62,26 @@ resource "aws_cloudwatch_log_group" "access-log" {
   kms_key_id        = aws_kms_key.kms_for_cloudwatch.arn
 }
 
+resource "aws_iam_role" "cloudwatch" {
+  name = "api_gateway_cloudwatch_global"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
 resource "aws_api_gateway_stage" "api-test" {
   depends_on    = [aws_cloudwatch_log_group.access-log, aws_api_gateway_account.role_cloudwatch_gateway]
   deployment_id = aws_api_gateway_deployment.api-test.id
@@ -70,7 +90,23 @@ resource "aws_api_gateway_stage" "api-test" {
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.access-log.arn
-    format          = "json"
+    format          = <<EOF
+{ "requestId":"$context.requestId",
+  "extendedRequestId":"$context.extendedRequestId",
+  "ip": "$context.identity.sourceIp",
+  "caller":"$context.identity.caller",
+  "user":"$context.identity.user",
+  "requestTime":"$context.requestTime",
+  "httpMethod":"$context.httpMethod", \
+  "resourcePath":"$context.resourcePath",
+  "status":"$context.status",
+  "protocol":"$context.protocol",
+  "responseLength":"$context.responseLength"
+}
+EOF
+
+
+
   }
   xray_tracing_enabled = true
 
