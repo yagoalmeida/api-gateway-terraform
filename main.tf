@@ -43,12 +43,6 @@ resource "aws_api_gateway_deployment" "api-test" {
   }
 }
 
-resource "aws_kms_key" "kms_for_cloudwatch" {
-  description             = "kms_for_cloudwatch"
-  enable_key_rotation     = true
-  deletion_window_in_days = 10
-}
-
 resource "aws_cloudwatch_log_group" "access-log" {
   depends_on        = [aws_kms_key.kms_for_cloudwatch]
   name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.api-test.id}/${var.stage_name}"
