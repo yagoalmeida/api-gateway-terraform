@@ -21,10 +21,10 @@ resource "aws_api_gateway_method" "api-test" {
 }
 
 resource "aws_api_gateway_method_settings" "api-test" {
+  depends_on  = [aws_api_gateway_account.role_cloudwatch_gateway]
   rest_api_id = aws_api_gateway_rest_api.api-test.id
   stage_name  = var.stage_name
   method_path = "*/*"
-
   settings {
     data_trace_enabled = true
     metrics_enabled    = true
@@ -63,7 +63,7 @@ resource "aws_cloudwatch_log_group" "access-log" {
 }
 
 resource "aws_api_gateway_stage" "api-test" {
-  depends_on    = [aws_cloudwatch_log_group.access-log]
+  depends_on    = [aws_cloudwatch_log_group.access-log, aws_api_gateway_account.role_cloudwatch_gateway]
   deployment_id = aws_api_gateway_deployment.api-test.id
   rest_api_id   = aws_api_gateway_rest_api.api-test.id
   stage_name    = var.stage_name
@@ -76,24 +76,52 @@ resource "aws_api_gateway_stage" "api-test" {
 
 }
 
-resource "aws_iam_role" "iam_for_gateway" {
-  name               = "iam_for_gateway"
-  assume_role_policy = data.aws_iam_policy_document.policy_for_gateway.json
+resource "aws_api_gateway_account" "role_cloudwatch_gateway" {
+  cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
 }
 
-data "aws_iam_policy_document" "policy_for_gateway" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["apigateway.amazonaws.com"]
+resource "aws_iam_role" "cloudwatch" {
+  name = "api_gateway_cloudwatch_global"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
     }
-  }
+  ]
+}
+EOF
 }
 
+resource "aws_iam_role_policy" "cloudwatch" {
+  name = "default"
+  role = aws_iam_role.cloudwatch.id
 
-resource "aws_api_gateway_account" "api-test" {
-  cloudwatch_role_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents",
+                "logs:GetLogEvents",
+                "logs:FilterLogEvents"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
-
+EOF
+}
