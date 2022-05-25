@@ -20,6 +20,18 @@ resource "aws_api_gateway_method" "api-test" {
   api_key_required = true
 }
 
+resource "aws_api_gateway_method_settings" "example" {
+  rest_api_id = aws_api_gateway_rest_api.api-test.id
+  stage_name  = var.stage_name
+  method_path = "*/*"
+
+  settings {
+    data_trace_enabled = true
+    metrics_enabled    = true
+    logging_level      = "ERROR"
+  }
+}
+
 resource "aws_api_gateway_integration" "api-test" {
   http_method = aws_api_gateway_method.api-test.http_method
   resource_id = aws_api_gateway_resource.api-test.id
