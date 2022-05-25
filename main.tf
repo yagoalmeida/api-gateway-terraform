@@ -20,7 +20,7 @@ resource "aws_api_gateway_method" "api-test" {
   api_key_required = true
 }
 
-resource "aws_api_gateway_method_settings" "example" {
+resource "aws_api_gateway_method_settings" "api-test" {
   rest_api_id = aws_api_gateway_rest_api.api-test.id
   stage_name  = var.stage_name
   method_path = "*/*"
@@ -74,4 +74,24 @@ resource "aws_api_gateway_stage" "api-test" {
   }
   xray_tracing_enabled = true
 
+}
+
+resource "aws_iam_role" "iam_for_gateway" {
+  name               = "iam_for_gateway"
+  assume_role_policy = data.aws_iam_policy_document.policy_for_gateway.json
+}
+
+data "aws_iam_policy_document" "policy_for_gateway" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["apigateway.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_api_gateway_account" "api-test" {
+  cloudwatch_role_arn = aws_iam_role.iam_for_gateway.arn
 }
