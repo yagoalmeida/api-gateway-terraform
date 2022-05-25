@@ -72,17 +72,17 @@ resource "aws_api_gateway_stage" "api-test" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.access-log.arn
     format          = <<EOF
-{ "requestId":"$context.requestId",
-  "extendedRequestId":"$context.extendedRequestId",
-  "ip": "$context.identity.sourceIp",
-  "caller":"$context.identity.caller",
-  "user":"$context.identity.user",
-  "requestTime":"$context.requestTime",
+{ "requestId":"$context.requestId", \
+  "extendedRequestId":"$context.extendedRequestId", \
+  "ip": "$context.identity.sourceIp", \
+  "caller":"$context.identity.caller", \
+  "user":"$context.identity.user", \
+  "requestTime":"$context.requestTime", \
   "httpMethod":"$context.httpMethod", \
-  "resourcePath":"$context.resourcePath",
-  "status":"$context.status",
-  "protocol":"$context.protocol",
-  "responseLength":"$context.responseLength"
+  "resourcePath":"$context.resourcePath", \
+  "status":"$context.status", \
+  "protocol":"$context.protocol", \
+  "responseLength":"$context.responseLength" \
 }
 EOF
 
