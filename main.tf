@@ -62,25 +62,6 @@ resource "aws_cloudwatch_log_group" "access-log" {
   kms_key_id        = aws_kms_key.kms_for_cloudwatch.arn
 }
 
-resource "aws_iam_role" "cloudwatch" {
-  name = "api_gateway_cloudwatch_global"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "apigateway.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-}
 
 resource "aws_api_gateway_stage" "api-test" {
   depends_on    = [aws_cloudwatch_log_group.access-log, aws_api_gateway_account.role_cloudwatch_gateway]
@@ -104,7 +85,6 @@ resource "aws_api_gateway_stage" "api-test" {
   "responseLength":"$context.responseLength"
 }
 EOF
-
 
 
   }
