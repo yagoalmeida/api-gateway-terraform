@@ -48,7 +48,8 @@ data "aws_iam_policy_document" "cloudwatch" {
 }
 
 resource "aws_kms_key" "kms_for_cloudwatch" {
-  description             = "kms_for_cloudwatch"
+  description = "kms_for_cloudwatch"
+  policy      = data.aws_iam_policy_document.cloudwatch.json
   enable_key_rotation     = true
   deletion_window_in_days = 10
 }
