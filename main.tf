@@ -1,3 +1,7 @@
+variable "stage_name" {
+  default = "dev"
+
+}
 resource "aws_api_gateway_rest_api" "api-test" {
   name = "api-test"
 }
@@ -39,8 +43,21 @@ resource "aws_api_gateway_deployment" "api-test" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "access-log" {
+  name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.api-test.id}/${var.stage_name}"
+  retention_in_days = 1
+}
+
 resource "aws_api_gateway_stage" "api-test" {
+  depends_on    = [aws_cloudwatch_log_group.access-log]
   deployment_id = aws_api_gateway_deployment.api-test.id
   rest_api_id   = aws_api_gateway_rest_api.api-test.id
-  stage_name    = "dev"
+  stage_name    = var.stage_name
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.access-log.arn
+    format          = "json"
+  }
+  xray_tracing_enabled = true
+
 }
