@@ -104,7 +104,7 @@ data "aws_iam_policy_document" "policy_cloudwatch" {
       "logs:GetLogEvents",
       "logs:FilterLogEvents"
     ]
-    resources = ["*"]
+    resources = [aws_api_gateway_resource.api-test.id]
   }
 }
 
