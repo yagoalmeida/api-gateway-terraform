@@ -92,6 +92,28 @@ data "aws_iam_policy_document" "policy_for_gateway" {
   }
 }
 
+data "aws_iam_policy_document" "policy_cloudwatch" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents"
+    ]
+    resources = ["*"]
+  }
+}
+
 resource "aws_api_gateway_account" "api-test" {
   cloudwatch_role_arn = aws_iam_role.iam_for_gateway.arn
+}
+
+resource "aws_iam_role_policy" "cloudwatch" {
+  name   = "default"
+  role   = aws_iam_role.iam_for_gateway.id
+  policy = data.aws_iam_policy_document.policy_cloudwatch.json
 }
